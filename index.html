@@ -10,126 +10,128 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Space+Grotesk:wght@300;700&display=swap');
         
-        body, html { background: #000; color: #fff; overflow-x: hidden; font-family: 'Space Grotesk', sans-serif; }
+        body, html { background: #000; color: #fff; overflow-x: hidden; font-family: 'Space Grotesk', sans-serif; height: 100%; }
         
-        /* Intro Overlay */
-        #intro-screen {
-            position: fixed; inset: 0; background: #000; z-index: 2000;
+        /* Intro Sequence */
+        #intro-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 5000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-image: radial-gradient(circle, #200 0%, #000 70%);
         }
 
-        .matrix-bg { position: fixed; inset: 0; z-index: -1; opacity: 0.15; }
-        .terminal { font-family: 'Fira Code', monospace; color: #ff0000; font-size: 13px; line-height: 1.5; }
-        .glass { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255, 0, 0, 0.2); }
-        
-        .glitch-text { animation: glitch 1s infinite; text-shadow: 2px 0 #ff0000, -2px 0 #00ff00; }
-        @keyframes glitch { 0% { transform: skew(0deg); } 20% { transform: skew(2deg); } 40% { transform: skew(-2deg); } 100% { transform: skew(0deg); } }
+        .loader-bar { width: 0%; height: 2px; background: #ff0000; box-shadow: 0 0 20px #f00; transition: width 0.4s; }
+        .terminal-log { font-family: 'Fira Code', monospace; color: #f00; font-size: 12px; height: 150px; overflow: hidden; width: 100%; max-width: 500px; }
 
+        /* General Styles */
+        .glass { background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(15px); border: 1px solid rgba(255, 0, 0, 0.15); }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.8s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { display: block; animation: slideUp 0.5s ease forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .matrix-canvas { position: fixed; inset: 0; z-index: -1; opacity: 0.1; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div id="intro-screen">
-        <div class="max-w-3xl w-full p-6">
-            <div class="terminal mb-6 h-80 overflow-hidden" id="typewriter"></div>
-            <div id="intro-footer" class="hidden text-center animate-bounce">
-                <button onclick="revealSite()" class="bg-red-600 text-white px-10 py-3 font-bold rounded-full hover:bg-white hover:text-black transition-all">
-                    INICIALIZAR INTERFACE_
-                </button>
+    <div id="intro-overlay">
+        <div class="p-8 w-full max-w-lg">
+            <h1 class="text-3xl font-black mb-8 tracking-tighter italic">ECLIPSE <span class="text-red-600">SYSTEMS</span></h1>
+            <div id="log-container" class="terminal-log mb-6"></div>
+            <div class="w-full bg-white/5 h-1 mb-2">
+                <div id="p-bar" class="loader-bar"></div>
             </div>
+            <div class="flex justify-between text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+                <span id="load-status">Decriptando Kernel...</span>
+                <span id="load-perc">0%</span>
+            </div>
+            <button id="btn-enter" class="hidden mt-10 w-full border border-red-600 py-3 font-bold hover:bg-red-600 transition-all duration-500">ACESSAR INTERFACE</button>
         </div>
     </div>
 
-    <canvas id="matrix" class="matrix-bg"></canvas>
+    <canvas id="matrix" class="matrix-canvas"></canvas>
 
-    <div id="auth-zone" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90 hidden">
-        <div class="glass p-10 rounded-2xl w-full max-w-md" data-aos="zoom-in">
-            <div class="text-center mb-8">
-                <h2 class="text-4xl font-black text-red-600 tracking-tighter">ECLIPSE LOGIN</h2>
-                <p class="text-[10px] text-gray-500 mt-2 uppercase tracking-[0.3em]">Acesso Restrito ao Kernel</p>
-            </div>
+    <div id="auth-screen" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90 hidden">
+        <div class="glass p-10 rounded-3xl w-full max-w-md shadow-2xl" data-aos="zoom-in">
+            <h2 class="text-3xl font-black text-center mb-8 italic">LOGIN_<span class="text-red-600">REQUIRED</span></h2>
             <div class="space-y-4">
-                <input type="text" id="regUser" placeholder="NICKNAME" class="w-full bg-black/50 border border-white/10 p-4 rounded-lg outline-none focus:border-red-600">
-                <input type="email" id="regEmail" placeholder="EMAIL" class="w-full bg-black/50 border border-white/10 p-4 rounded-lg outline-none focus:border-red-600">
-                <input type="password" id="regPass" placeholder="PASSWORD" class="w-full bg-black/50 border border-white/10 p-4 rounded-lg outline-none focus:border-red-600">
-                
-                <button id="authBtn" class="w-full bg-red-600 py-4 rounded-lg font-bold hover:bg-red-700 transition">CONECTAR</button>
-                <button id="toggleAuth" class="w-full text-[10px] text-gray-500 hover:text-white mt-2">NÃO TENHO CONTA / JÁ TENHO CONTA</button>
+                <input type="text" id="regUser" placeholder="NOME DE AGENTE" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 focus:border-red-600 outline-none transition">
+                <input type="email" id="regEmail" placeholder="EMAIL@ECLIPSE.COM" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 focus:border-red-600 outline-none transition">
+                <input type="password" id="regPass" placeholder="••••••••" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 focus:border-red-600 outline-none transition">
+                <button id="authBtn" class="w-full bg-red-600 py-4 rounded-xl font-black hover:tracking-[0.2em] transition-all">CONECTAR</button>
+                <p class="text-center text-[10px] text-gray-600">SISTEMA MONITORADO POR SILVA777ONLY</p>
             </div>
         </div>
     </div>
 
     <div id="main-site" class="hidden">
-        <nav class="fixed w-full p-6 flex justify-between items-center glass z-50">
-            <div class="text-2xl font-black italic">ECLIPSE<span class="text-red-600">SEC</span></div>
-            <div class="flex gap-8 text-xs font-bold">
-                <button onclick="setTab('home')" class="hover:text-red-500">HOME</button>
-                <button onclick="setTab('about')" class="hover:text-red-500">SOBRE</button>
-                <button onclick="setTab('chat')" class="hover:text-red-500">CHAT</button>
-                <button onclick="setTab('sos')" class="hover:text-red-500 text-red-600">SOS</button>
+        <nav class="fixed top-0 w-full z-50 p-6 flex justify-between items-center glass border-b border-red-900/20">
+            <div class="text-2xl font-black text-red-600 italic tracking-tighter">ECLIPSE.SEC</div>
+            <div class="hidden md:flex gap-10 text-[11px] font-bold tracking-widest">
+                <button onclick="setTab('home')" class="hover:text-red-500 transition">INÍCIO</button>
+                <button onclick="setTab('about')" class="hover:text-red-500 transition">NOSSO TRABALHO</button>
+                <button onclick="setTab('chat')" class="hover:text-red-500 transition">CHAT_GLOBAL</button>
+                <button onclick="setTab('sos')" class="text-red-600 border border-red-600 px-3 py-1 rounded hover:bg-red-600 hover:text-white transition">SOS</button>
             </div>
+            <button id="btnLogout" class="text-red-600"><i class="fas fa-power-off"></i></button>
         </nav>
 
-        <section id="home" class="tab-content active pt-40 px-6 max-w-6xl mx-auto">
-            <div class="grid md:grid-cols-2 gap-10">
+        <section id="home" class="tab-content active pt-44 px-6 max-w-6xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-20 items-center">
                 <div data-aos="fade-right">
-                    <h1 class="text-7xl font-black mb-6 glitch-text">PROTEÇÃO<br>TOTAL.</h1>
-                    <p class="text-gray-400 text-lg">Especialistas em derrubar exploits, limpar backdoors e blindar RemoteEvents no Roblox.</p>
+                    <span class="text-red-600 font-mono text-sm">[ STATUS: ATIVO ]</span>
+                    <h1 class="text-8xl font-black mb-6 leading-none">VULN<br>HUNTER.</h1>
+                    <p class="text-gray-500 text-xl leading-relaxed">Proteção avançada para jogos Roblox. Identificamos falhas de segurança antes que o prejuízo seja inevitável.</p>
                 </div>
-                <div class="glass p-8 rounded-2xl" data-aos="fade-left">
-                    <h3 class="font-bold text-red-600 mb-4">STATUS DO SISTEMA</h3>
-                    <div class="text-xs font-mono space-y-2 opacity-70">
-                        <p>[OK] Firewall v4.1 Ativo</p>
-                        <p>[OK] Monitor de Injeção: Online</p>
-                        <p class="text-green-500">[!] Silva777only Conectado</p>
-                    </div>
+                <div class="relative glass p-10 rounded-full w-80 h-80 flex items-center justify-center mx-auto border-dashed border-red-600/30 animate-[spin_20s_linear_infinite]">
+                    <i class="fas fa-shield-alt text-7xl text-red-600 animate-[pulse_2s_infinite]"></i>
                 </div>
             </div>
         </section>
 
-        <section id="about" class="tab-content pt-40 px-6 max-w-4xl mx-auto text-center">
-            <h2 class="text-5xl font-black mb-10">NOSSO TRABALHO</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                <div class="glass p-6 rounded-xl">
-                    <i class="fas fa-search-bug text-red-600 text-2xl mb-4"></i>
-                    <h4 class="font-bold mb-2">Auditoria de Código</h4>
-                    <p class="text-sm text-gray-400">Analisamos cada linha do seu jogo para achar brechas que permitem hackers usarem Admin Panel.</p>
+        <section id="about" class="tab-content pt-44 px-6 max-w-5xl mx-auto">
+            <h2 class="text-4xl font-black mb-12 text-center">DOMÍNIO DE <span class="text-red-600">SEGURANÇA</span></h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="glass p-8 rounded-3xl" data-aos="fade-up">
+                    <h3 class="font-bold text-red-600 mb-4 tracking-tighter">01. SCANNER</h3>
+                    <p class="text-sm text-gray-400">Varredura profunda em scripts de servidor e LocalScripts para detecção de backdoors.</p>
                 </div>
-                <div class="glass p-6 rounded-xl">
-                    <i class="fas fa-shield-virus text-red-600 text-2xl mb-4"></i>
-                    <h4 class="font-bold mb-2">Anti-Crash</h4>
-                    <p class="text-sm text-gray-400">Proteção exclusiva contra laggers de servidor e ataques de Remote Event Spam.</p>
+                <div class="glass p-8 rounded-3xl" data-aos="fade-up" data-aos-delay="100">
+                    <h3 class="font-bold text-red-600 mb-4 tracking-tighter">02. MITIGAÇÃO</h3>
+                    <p class="text-sm text-gray-400">Intervenção em tempo real contra ataques de Remote Event Spamming.</p>
                 </div>
-            </div>
-        </section>
-
-        <section id="chat" class="tab-content pt-40 px-6 max-w-4xl mx-auto">
-            <div class="glass h-[500px] flex flex-col rounded-2xl overflow-hidden">
-                <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-4 font-mono text-sm"></div>
-                <div class="p-4 bg-white/5 flex gap-2">
-                    <input type="text" id="chatMsg" placeholder="Sua mensagem..." class="flex-1 bg-transparent outline-none">
-                    <button id="sendMsg" class="text-red-600 font-bold">ENVIAR</button>
+                <div class="glass p-8 rounded-3xl" data-aos="fade-up" data-aos-delay="200">
+                    <h3 class="font-bold text-red-600 mb-4 tracking-tighter">03. BLINDAGEM</h3>
+                    <p class="text-sm text-gray-400">Implementação de sistemas Anti-Exploit customizados para cada tipo de gameplay.</p>
                 </div>
             </div>
         </section>
 
-        <section id="sos" class="tab-content pt-40 px-6 max-w-xl mx-auto">
-            <div class="glass p-10 rounded-3xl border-red-600 shadow-2xl shadow-red-900/20">
-                <h2 class="text-2xl font-black mb-6 text-center">PEDIR AJUDA IMEDIATA</h2>
-                <input type="text" id="sosLink" placeholder="LINK DO JOGO" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl mb-4 outline-none">
-                <textarea id="sosDesc" placeholder="O QUE ESTÁ ACONTECENDO?" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl h-32 mb-4 outline-none"></textarea>
-                <button id="sendSos" class="w-full bg-red-600 py-4 rounded-xl font-black hover:bg-white hover:text-black transition">DISPARAR SINAL</button>
+        <section id="chat" class="tab-content pt-44 px-6 max-w-4xl mx-auto">
+            <div class="glass rounded-3xl overflow-hidden shadow-2xl shadow-red-600/5">
+                <div id="msg-box" class="h-[450px] overflow-y-auto p-8 space-y-4 font-mono text-sm"></div>
+                <div class="p-6 bg-white/5 border-t border-white/5 flex gap-4">
+                    <input type="text" id="chatInput" placeholder="Digite um comando..." class="flex-1 bg-transparent outline-none text-red-500">
+                    <button id="sendChat" class="text-red-600 font-black tracking-widest">SEND_</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="sos" class="tab-content pt-44 px-6 max-w-xl mx-auto">
+            <div class="glass p-10 rounded-3xl border-t-4 border-red-600">
+                <h3 class="text-2xl font-black mb-6 italic underline">SINAL DE EMERGÊNCIA</h3>
+                <div class="space-y-4">
+                    <input type="text" id="sosLink" placeholder="URL DO JOGO" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 outline-none focus:border-red-600">
+                    <textarea id="sosDesc" placeholder="DESCREVA O ATAQUE..." class="w-full bg-white/5 p-4 rounded-xl border border-white/5 outline-none focus:border-red-600 h-32"></textarea>
+                    <button id="btnSos" class="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-red-600 hover:text-white transition-all">DISPARAR CHAMADO</button>
+                </div>
             </div>
         </section>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB6qSmwYE9E1Ypl79LRSqaDj_N0XuvRVqY",
@@ -144,117 +146,124 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- INTRO TERMINAL ---
-        const term = document.getElementById('typewriter');
-        const lines = [
-            "> Conectando ao servidor Eclipse...",
-            "> Carregando protocolos de segurança Roblox...",
-            "> Verificando integridade de dados...",
-            "> ATENÇÃO: Tentativa de exploit detectada e bloqueada.",
-            "> Especialista silva777only em modo de espera.",
-            "> Nosso trabalho: Identificação, Neutralização e Blindagem.",
-            "> Tudo pronto. Bem-vindo à nova era da segurança."
+        // --- INTRO LOGIC ---
+        const logs = [
+            "SYS: Inicializando Eclipse Security...",
+            "AUTH: Conectando ao Cloud Firestore...",
+            "DB: Verificando tabelas de vulnerabilidades...",
+            "WARN: Tentativa de injeção em server_01 bloqueada.",
+            "SCAN: Identificando backdoor em game_id: 2831...",
+            "STATUS: silva777only operacional.",
+            "READY: Interface liberada para agentes."
         ];
+        
+        let lIdx = 0;
+        const logBox = document.getElementById('log-container');
+        const pBar = document.getElementById('p-bar');
+        const pPerc = document.getElementById('load-perc');
 
-        let lineIdx = 0;
-        function type() {
-            if(lineIdx < lines.length) {
-                term.innerHTML += `<p class="mb-2">${lines[lineIdx]}</p>`;
-                lineIdx++;
-                setTimeout(type, 800);
+        const runIntro = () => {
+            if(lIdx < logs.length) {
+                const p = document.createElement('p');
+                p.className = "mb-1";
+                p.innerText = `> ${logs[lIdx]}`;
+                logBox.appendChild(p);
+                lIdx++;
+                const prc = Math.floor((lIdx / logs.length) * 100);
+                pBar.style.width = prc + "%";
+                pPerc.innerText = prc + "%";
+                setTimeout(runIntro, 600);
             } else {
-                document.getElementById('intro-footer').classList.remove('hidden');
+                document.getElementById('btn-enter').classList.remove('hidden');
             }
-        }
-        type();
+        };
+        runIntro();
 
-        window.revealSite = () => {
-            document.getElementById('intro-screen').style.display = 'none';
-            document.getElementById('auth-zone').classList.remove('hidden');
+        document.getElementById('btn-enter').onclick = () => {
+            document.getElementById('intro-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('intro-overlay').style.display = 'none';
+                document.getElementById('auth-screen').classList.remove('hidden');
+            }, 500);
         };
 
-        // --- AUTH LOGIC (CORRIGIDA) ---
-        let mode = 'login';
-        document.getElementById('toggleAuth').onclick = () => {
-            mode = (mode === 'login' ? 'reg' : 'login');
-            document.getElementById('authBtn').innerText = (mode === 'login' ? 'CONECTAR' : 'CRIAR ACESSO');
+        // --- AUTH & TAB LOGIC ---
+        window.setTab = (id) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         };
 
         document.getElementById('authBtn').onclick = async () => {
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
             const user = document.getElementById('regUser').value;
-
             try {
-                if(mode === 'reg') {
+                // Tenta logar, se falhar, tenta registrar
+                try {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                } catch {
                     const r = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(r.user, { displayName: user });
                     window.location.reload();
-                } else {
-                    await signInWithEmailAndPassword(auth, email, pass);
                 }
-            } catch(e) { 
-                alert("ACESSO NEGADO: " + e.message); 
-            }
+            } catch(e) { alert("ERRO: " + e.message); }
         };
 
         onAuthStateChanged(auth, (u) => {
             if(u) {
-                document.getElementById('auth-zone').classList.add('hidden');
+                document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('main-site').classList.remove('hidden');
-                initApp();
+                startChat();
             }
         });
 
-        // --- TABS ---
-        window.setTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        };
+        document.getElementById('btnLogout').onclick = () => signOut(auth);
 
-        // --- CHAT & SOS ---
-        function initApp() {
+        // --- DATA LOGIC ---
+        function startChat() {
             const q = query(collection(db, "chat_geral"), orderBy("createdAt", "asc"));
             onSnapshot(q, (s) => {
-                const box = document.getElementById('messages');
+                const box = document.getElementById('msg-box');
                 box.innerHTML = "";
                 s.forEach(d => {
-                    const isSilva = d.data().username === "silva777only";
-                    box.innerHTML += `<div class="${isSilva ? 'text-red-500 font-bold' : ''}">[${d.data().displayName}]: ${d.data().text}</div>`;
+                    const data = d.data();
+                    const isS = data.username === "silva777only";
+                    box.innerHTML += `<div class="${isS ? 'text-red-600 font-bold' : 'text-gray-400'}">[${data.displayName}]: ${data.text}</div>`;
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
 
-        document.getElementById('sendMsg').onclick = async () => {
-            const inp = document.getElementById('chatMsg');
+        document.getElementById('sendChat').onclick = async () => {
+            const i = document.getElementById('chatInput');
+            if(!i.value) return;
             await addDoc(collection(db, "chat_geral"), {
-                text: inp.value, displayName: auth.currentUser.displayName, 
+                text: i.value, displayName: auth.currentUser.displayName,
                 username: auth.currentUser.displayName, createdAt: serverTimestamp()
             });
-            inp.value = "";
+            i.value = "";
         };
 
-        document.getElementById('sendSos').onclick = async () => {
+        document.getElementById('btnSos').onclick = async () => {
             await addDoc(collection(db, "ajuda_emergencial"), {
                 link: document.getElementById('sosLink').value,
                 desc: document.getElementById('sosDesc').value,
                 user: auth.currentUser.displayName, createdAt: serverTimestamp()
             });
-            alert("SINAL DE SOCORRO ENVIADO.");
+            alert("ALERTA DISPARADO!");
         };
 
         // --- MATRIX CANVAS ---
-        const canvas = document.getElementById('matrix');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const drops = Array(Math.floor(canvas.width/15)).fill(1);
+        const c = document.getElementById('matrix');
+        const ctx = c.getContext('2d');
+        c.width = window.innerWidth; c.height = window.innerHeight;
+        const drops = Array(Math.floor(c.width/20)).fill(1);
         function draw() {
-            ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = "#f00"; ctx.font = "15px monospace";
+            ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,c.width,c.height);
+            ctx.fillStyle = "#300"; ctx.font = "15px monospace";
             drops.forEach((y, i) => {
-                ctx.fillText("01", i*15, y*15);
-                if(y*15 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                ctx.fillText("01", i*20, y*20);
+                if(y*20 > c.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
             });
         }
