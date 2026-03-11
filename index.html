@@ -3,135 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eclipse Security | Protocol 777</title>
+    <title>Eclipse Security | Protocol IP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Space+Grotesk:wght@300;700&display=swap');
-        
-        body, html { background: #000; color: #fff; overflow-x: hidden; font-family: 'Space Grotesk', sans-serif; height: 100%; }
-        
-        /* Intro Sequence */
-        #intro-overlay {
-            position: fixed; inset: 0; background: #000; z-index: 5000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background-image: radial-gradient(circle, #200 0%, #000 70%);
-        }
-
-        .loader-bar { width: 0%; height: 2px; background: #ff0000; box-shadow: 0 0 20px #f00; transition: width 0.4s; }
-        .terminal-log { font-family: 'Fira Code', monospace; color: #f00; font-size: 12px; height: 150px; overflow: hidden; width: 100%; max-width: 500px; }
-
-        /* General Styles */
-        .glass { background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(15px); border: 1px solid rgba(255, 0, 0, 0.15); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        body { background: #050505; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        .glass { background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: slideUp 0.5s ease forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-        .matrix-canvas { position: fixed; inset: 0; z-index: -1; opacity: 0.1; pointer-events: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Intro Overlay */
+        #intro-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .terminal-modern { font-family: 'JetBrains Mono', monospace; background: #0a0a0a; border-radius: 12px; padding: 2rem; width: 90%; max-width: 600px; border: 1px solid #ff003333; }
+        .loading-line { width: 0%; height: 3px; background: #f03; box-shadow: 0 0 15px #f03; }
     </style>
 </head>
 <body>
 
     <div id="intro-overlay">
-        <div class="p-8 w-full max-w-lg">
-            <h1 class="text-3xl font-black mb-8 tracking-tighter italic">ECLIPSE <span class="text-red-600">SYSTEMS</span></h1>
-            <div id="log-container" class="terminal-log mb-6"></div>
-            <div class="w-full bg-white/5 h-1 mb-2">
-                <div id="p-bar" class="loader-bar"></div>
+        <div class="terminal-modern">
+            <div id="log-screen" class="h-48 overflow-hidden text-xs text-gray-400 font-mono mb-6"></div>
+            <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                <div id="progress-bar" class="loading-line"></div>
             </div>
-            <div class="flex justify-between text-[10px] font-mono text-gray-500 uppercase tracking-widest">
-                <span id="load-status">Decriptando Kernel...</span>
-                <span id="load-perc">0%</span>
+            <div class="flex justify-between mt-3 text-[10px] font-bold text-red-500 uppercase tracking-widest">
+                <span id="load-msg">Rastreando Endereço de Rede...</span>
+                <span id="load-pct">0%</span>
             </div>
-            <button id="btn-enter" class="hidden mt-10 w-full border border-red-600 py-3 font-bold hover:bg-red-600 transition-all duration-500">ACESSAR INTERFACE</button>
+            <button id="entry-btn" class="hidden w-full mt-8 py-4 bg-white text-black font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all rounded-lg">
+                Liberar Acesso
+            </button>
         </div>
     </div>
 
-    <canvas id="matrix" class="matrix-canvas"></canvas>
-
-    <div id="auth-screen" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90 hidden">
-        <div class="glass p-10 rounded-3xl w-full max-w-md shadow-2xl" data-aos="zoom-in">
-            <h2 class="text-3xl font-black text-center mb-8 italic">LOGIN_<span class="text-red-600">REQUIRED</span></h2>
+    <div id="auth-modal" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/90 hidden">
+        <div class="glass p-10 rounded-3xl w-full max-w-md border-red-600/30 shadow-2xl">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black italic uppercase">Eclipse <span class="text-red-600">Gate</span></h2>
+                <p class="text-[10px] text-gray-500 mt-2 uppercase tracking-widest" id="ip-display">Detectando seu IP...</p>
+            </div>
             <div class="space-y-4">
-                <input type="text" id="regUser" placeholder="NOME DE AGENTE" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 focus:border-red-600 outline-none transition">
-                <input type="email" id="regEmail" placeholder="EMAIL@ECLIPSE.COM" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 focus:border-red-600 outline-none transition">
-                <input type="password" id="regPass" placeholder="••••••••" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 focus:border-red-600 outline-none transition">
-                <button id="authBtn" class="w-full bg-red-600 py-4 rounded-xl font-black hover:tracking-[0.2em] transition-all">CONECTAR</button>
-                <p class="text-center text-[10px] text-gray-600">SISTEMA MONITORADO POR SILVA777ONLY</p>
+                <input type="text" id="auth-nick" placeholder="Digite seu Nome de Usuário" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-red-600 transition text-center font-bold">
+                <button id="btn-login-ip" class="w-full bg-red-600 py-4 rounded-xl font-black hover:bg-white hover:text-black transition-all">ENTRAR NO SISTEMA</button>
+                <p class="text-[9px] text-gray-600 text-center uppercase tracking-tighter">Nota: Seu IP será vinculado permanentemente a este Nome de Usuário.</p>
             </div>
         </div>
     </div>
 
-    <div id="main-site" class="hidden">
-        <nav class="fixed top-0 w-full z-50 p-6 flex justify-between items-center glass border-b border-red-900/20">
-            <div class="text-2xl font-black text-red-600 italic tracking-tighter">ECLIPSE.SEC</div>
-            <div class="hidden md:flex gap-10 text-[11px] font-bold tracking-widest">
-                <button onclick="setTab('home')" class="hover:text-red-500 transition">INÍCIO</button>
-                <button onclick="setTab('about')" class="hover:text-red-500 transition">NOSSO TRABALHO</button>
-                <button onclick="setTab('chat')" class="hover:text-red-500 transition">CHAT_GLOBAL</button>
-                <button onclick="setTab('sos')" class="text-red-600 border border-red-600 px-3 py-1 rounded hover:bg-red-600 hover:text-white transition">SOS</button>
+    <div id="main-interface" class="hidden h-screen flex flex-col">
+        <nav class="fixed top-0 w-full z-50 glass px-8 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center"><i class="fas fa-shield-alt"></i></div>
+                <span class="text-xl font-extrabold tracking-tighter uppercase">Eclipse Security</span>
             </div>
-            <button id="btnLogout" class="text-red-600"><i class="fas fa-power-off"></i></button>
+            <div class="hidden md:flex gap-6">
+                <button onclick="setTab('home')" class="text-[11px] font-bold uppercase hover:text-red-500 transition">Início</button>
+                <button onclick="setTab('about')" class="text-[11px] font-bold uppercase hover:text-red-500 transition">Sobre Nós</button>
+                <button onclick="setTab('chat')" class="text-[11px] font-bold uppercase hover:text-red-500 transition">Chat Geral</button>
+                <button onclick="setTab('sos')" class="text-[11px] font-bold uppercase text-red-600 transition">Emergência</button>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="display-user" class="text-[10px] font-bold bg-white/5 px-3 py-1 rounded border border-white/10"></span>
+                <button onclick="location.reload()" class="text-gray-500"><i class="fas fa-power-off"></i></button>
+            </div>
         </nav>
 
-        <section id="home" class="tab-content active pt-44 px-6 max-w-6xl mx-auto">
-            <div class="grid lg:grid-cols-2 gap-20 items-center">
-                <div data-aos="fade-right">
-                    <span class="text-red-600 font-mono text-sm">[ STATUS: ATIVO ]</span>
-                    <h1 class="text-8xl font-black mb-6 leading-none">VULN<br>HUNTER.</h1>
-                    <p class="text-gray-500 text-xl leading-relaxed">Proteção avançada para jogos Roblox. Identificamos falhas de segurança antes que o prejuízo seja inevitável.</p>
-                </div>
-                <div class="relative glass p-10 rounded-full w-80 h-80 flex items-center justify-center mx-auto border-dashed border-red-600/30 animate-[spin_20s_linear_infinite]">
-                    <i class="fas fa-shield-alt text-7xl text-red-600 animate-[pulse_2s_infinite]"></i>
+        <section id="home" class="tab-content active pt-44 px-8 text-center max-w-4xl mx-auto">
+            <h1 class="text-6xl md:text-8xl font-black mb-6">SEGURANÇA <br><span class="text-red-600">SEM BRECHAS.</span></h1>
+            <p class="text-gray-400 text-lg">Protegendo servidores de alta performance com monitoramento de pacotes e auditoria de scripts.</p>
+            <div class="mt-10 grid md:grid-cols-2 gap-4">
+                <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc51?auto=format&fit=crop&q=80&w=600" class="rounded-2xl opacity-50 grayscale hover:grayscale-0 transition duration-700" alt="Data Center">
+                <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=600" class="rounded-2xl opacity-50 grayscale hover:grayscale-0 transition duration-700" alt="Code">
+            </div>
+        </section>
+
+        <section id="chat" class="tab-content pt-44 px-8 h-full flex flex-col">
+            <div class="flex-1 glass max-w-4xl mx-auto w-full rounded-3xl overflow-hidden flex flex-col mb-10">
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 font-mono text-sm"></div>
+                <div class="p-6 bg-black/40 border-t border-white/5 flex gap-4">
+                    <input type="text" id="chat-input" placeholder="Comando de mensagem..." class="flex-1 bg-transparent border-b border-white/10 p-2 outline-none focus:border-red-600 transition">
+                    <button id="btn-send" class="text-red-600 font-bold uppercase">Enviar</button>
                 </div>
             </div>
         </section>
 
-        <section id="about" class="tab-content pt-44 px-6 max-w-5xl mx-auto">
-            <h2 class="text-4xl font-black mb-12 text-center">DOMÍNIO DE <span class="text-red-600">SEGURANÇA</span></h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="glass p-8 rounded-3xl" data-aos="fade-up">
-                    <h3 class="font-bold text-red-600 mb-4 tracking-tighter">01. SCANNER</h3>
-                    <p class="text-sm text-gray-400">Varredura profunda em scripts de servidor e LocalScripts para detecção de backdoors.</p>
-                </div>
-                <div class="glass p-8 rounded-3xl" data-aos="fade-up" data-aos-delay="100">
-                    <h3 class="font-bold text-red-600 mb-4 tracking-tighter">02. MITIGAÇÃO</h3>
-                    <p class="text-sm text-gray-400">Intervenção em tempo real contra ataques de Remote Event Spamming.</p>
-                </div>
-                <div class="glass p-8 rounded-3xl" data-aos="fade-up" data-aos-delay="200">
-                    <h3 class="font-bold text-red-600 mb-4 tracking-tighter">03. BLINDAGEM</h3>
-                    <p class="text-sm text-gray-400">Implementação de sistemas Anti-Exploit customizados para cada tipo de gameplay.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="chat" class="tab-content pt-44 px-6 max-w-4xl mx-auto">
-            <div class="glass rounded-3xl overflow-hidden shadow-2xl shadow-red-600/5">
-                <div id="msg-box" class="h-[450px] overflow-y-auto p-8 space-y-4 font-mono text-sm"></div>
-                <div class="p-6 bg-white/5 border-t border-white/5 flex gap-4">
-                    <input type="text" id="chatInput" placeholder="Digite um comando..." class="flex-1 bg-transparent outline-none text-red-500">
-                    <button id="sendChat" class="text-red-600 font-black tracking-widest">SEND_</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="sos" class="tab-content pt-44 px-6 max-w-xl mx-auto">
-            <div class="glass p-10 rounded-3xl border-t-4 border-red-600">
-                <h3 class="text-2xl font-black mb-6 italic underline">SINAL DE EMERGÊNCIA</h3>
-                <div class="space-y-4">
-                    <input type="text" id="sosLink" placeholder="URL DO JOGO" class="w-full bg-white/5 p-4 rounded-xl border border-white/5 outline-none focus:border-red-600">
-                    <textarea id="sosDesc" placeholder="DESCREVA O ATAQUE..." class="w-full bg-white/5 p-4 rounded-xl border border-white/5 outline-none focus:border-red-600 h-32"></textarea>
-                    <button id="btnSos" class="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-red-600 hover:text-white transition-all">DISPARAR CHAMADO</button>
-                </div>
+        <section id="sos" class="tab-content pt-44 px-8 max-w-xl mx-auto w-full">
+            <div class="glass p-10 rounded-3xl border-red-600/30">
+                <h2 class="text-2xl font-black mb-6">CENTRO DE RESPOSTA</h2>
+                <input type="text" id="sos-link" placeholder="Link do Jogo" class="w-full bg-white/5 p-4 rounded-xl mb-4 border border-white/5 outline-none">
+                <textarea id="sos-desc" placeholder="Relatório do ataque..." class="w-full bg-white/5 p-4 rounded-xl h-32 mb-4 border border-white/5 outline-none"></textarea>
+                <button id="btn-sos" class="w-full bg-red-600 py-4 rounded-xl font-bold hover:bg-white hover:text-black transition">DISPARAR CHAMADO</button>
             </div>
         </section>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB6qSmwYE9E1Ypl79LRSqaDj_N0XuvRVqY",
@@ -143,134 +114,134 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- INTRO LOGIC ---
-        const logs = [
-            "SYS: Inicializando Eclipse Security...",
-            "AUTH: Conectando ao Cloud Firestore...",
-            "DB: Verificando tabelas de vulnerabilidades...",
-            "WARN: Tentativa de injeção em server_01 bloqueada.",
-            "SCAN: Identificando backdoor em game_id: 2831...",
-            "STATUS: silva777only operacional.",
-            "READY: Interface liberada para agentes."
-        ];
-        
-        let lIdx = 0;
-        const logBox = document.getElementById('log-container');
-        const pBar = document.getElementById('p-bar');
-        const pPerc = document.getElementById('load-perc');
+        let userIP = "";
+        let userData = null;
 
-        const runIntro = () => {
+        // --- PEGAR IP DO USUÁRIO ---
+        async function fetchIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                userIP = data.ip;
+                document.getElementById('ip-display').innerText = `SEU ENDEREÇO IP: ${userIP}`;
+            } catch (e) {
+                document.getElementById('ip-display').innerText = "ERRO AO IDENTIFICAR IP";
+            }
+        }
+        fetchIP();
+
+        // --- INTRODUÇÃO ---
+        const logs = [
+            "Conectando ao núcleo Eclipse Security...",
+            "Injetando módulos de proteção de dados...",
+            "Verificando integridade do endereço IP...",
+            "Silva777only monitorando acesso...",
+            "Sistema pronto para autenticação de usuário."
+        ];
+        let lIdx = 0;
+        const startIntro = () => {
             if(lIdx < logs.length) {
                 const p = document.createElement('p');
                 p.className = "mb-1";
-                p.innerText = `> ${logs[lIdx]}`;
-                logBox.appendChild(p);
+                p.innerHTML = `<span class='text-red-600'>[LOG]</span> ${logs[lIdx]}`;
+                document.getElementById('log-screen').appendChild(p);
                 lIdx++;
                 const prc = Math.floor((lIdx / logs.length) * 100);
-                pBar.style.width = prc + "%";
-                pPerc.innerText = prc + "%";
-                setTimeout(runIntro, 600);
+                document.getElementById('progress-bar').style.width = prc + "%";
+                document.getElementById('load-pct').innerText = prc + "%";
+                setTimeout(startIntro, 800);
             } else {
-                document.getElementById('btn-enter').classList.remove('hidden');
+                document.getElementById('entry-btn').classList.remove('hidden');
             }
         };
-        runIntro();
+        startIntro();
 
-        document.getElementById('btn-enter').onclick = () => {
-            document.getElementById('intro-overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('intro-overlay').style.display = 'none';
-                document.getElementById('auth-screen').classList.remove('hidden');
-            }, 500);
+        document.getElementById('entry-btn').onclick = () => {
+            document.getElementById('intro-overlay').style.display = 'none';
+            document.getElementById('auth-modal').classList.remove('hidden');
         };
 
-        // --- AUTH & TAB LOGIC ---
-        window.setTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        };
+        // --- SISTEMA DE LOGIN POR USER & IP ---
+        document.getElementById('btn-login-ip').onclick = async () => {
+            const nick = document.getElementById('auth-nick').value.trim();
+            if(!nick || !userIP) return alert("Aguarde a detecção do IP e preencha o Nick.");
 
-        document.getElementById('authBtn').onclick = async () => {
-            const email = document.getElementById('regEmail').value;
-            const pass = document.getElementById('regPass').value;
-            const user = document.getElementById('regUser').value;
-            try {
-                // Tenta logar, se falhar, tenta registrar
-                try {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                } catch {
-                    const r = await createUserWithEmailAndPassword(auth, email, pass);
-                    await updateProfile(r.user, { displayName: user });
-                    window.location.reload();
+            const userRef = doc(db, "usuarios", nick);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const data = userSnap.data();
+                if (data.ip === userIP) {
+                    login(nick);
+                } else {
+                    alert("ACESSO NEGADO: Este Nick pertence a outro endereço IP.");
                 }
-            } catch(e) { alert("ERRO: " + e.message); }
+            } else {
+                // Registrar Novo Usuário vinculado ao IP
+                await setDoc(userRef, {
+                    username: nick,
+                    ip: userIP,
+                    createdAt: serverTimestamp()
+                });
+                login(nick);
+            }
         };
 
-        onAuthStateChanged(auth, (u) => {
-            if(u) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-site').classList.remove('hidden');
-                startChat();
-            }
-        });
+        function login(nick) {
+            userData = { username: nick, ip: userIP };
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('main-interface').classList.remove('hidden');
+            document.getElementById('display-user').innerText = nick;
+            document.body.style.overflow = "auto";
+            loadChat();
+        }
 
-        document.getElementById('btnLogout').onclick = () => signOut(auth);
-
-        // --- DATA LOGIC ---
-        function startChat() {
+        // --- CHAT & SOS ---
+        function loadChat() {
             const q = query(collection(db, "chat_geral"), orderBy("createdAt", "asc"));
             onSnapshot(q, (s) => {
-                const box = document.getElementById('msg-box');
+                const box = document.getElementById('chat-messages');
                 box.innerHTML = "";
                 s.forEach(d => {
-                    const data = d.data();
-                    const isS = data.username === "silva777only";
-                    box.innerHTML += `<div class="${isS ? 'text-red-600 font-bold' : 'text-gray-400'}">[${data.displayName}]: ${data.text}</div>`;
+                    const m = d.data();
+                    const isSilva = m.username === "silva777only";
+                    box.innerHTML += `<div class="p-2 border-b border-white/5"><span class="${isSilva ? 'text-red-600 font-bold' : 'text-gray-500'}">[${m.username}]</span>: ${m.text}</div>`;
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
 
-        document.getElementById('sendChat').onclick = async () => {
-            const i = document.getElementById('chatInput');
-            if(!i.value) return;
+        document.getElementById('btn-send').onclick = async () => {
+            const input = document.getElementById('chat-input');
+            if(!input.value.trim()) return;
             await addDoc(collection(db, "chat_geral"), {
-                text: i.value, displayName: auth.currentUser.displayName,
-                username: auth.currentUser.displayName, createdAt: serverTimestamp()
+                text: input.value,
+                username: userData.username,
+                createdAt: serverTimestamp()
             });
-            i.value = "";
+            input.value = "";
         };
 
-        document.getElementById('btnSos').onclick = async () => {
+        document.getElementById('btn-sos').onclick = async () => {
             await addDoc(collection(db, "ajuda_emergencial"), {
-                link: document.getElementById('sosLink').value,
-                desc: document.getElementById('sosDesc').value,
-                user: auth.currentUser.displayName, createdAt: serverTimestamp()
+                link: document.getElementById('sos-link').value,
+                desc: document.getElementById('sos-desc').value,
+                user: userData.username,
+                ip: userData.ip,
+                createdAt: serverTimestamp()
             });
-            alert("ALERTA DISPARADO!");
+            alert("Chamado transmitido. Silva777only analisará o incidente.");
         };
 
-        // --- MATRIX CANVAS ---
-        const c = document.getElementById('matrix');
-        const ctx = c.getContext('2d');
-        c.width = window.innerWidth; c.height = window.innerHeight;
-        const drops = Array(Math.floor(c.width/20)).fill(1);
-        function draw() {
-            ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,c.width,c.height);
-            ctx.fillStyle = "#300"; ctx.font = "15px monospace";
-            drops.forEach((y, i) => {
-                ctx.fillText("01", i*20, y*20);
-                if(y*20 > c.height && Math.random() > 0.975) drops[i] = 0;
-                drops[i]++;
-            });
-        }
-        setInterval(draw, 50);
+        window.setTab = (id) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        };
 
     </script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>AOS.init();</script>
+    <script>AOS.init({ duration: 1000, once: true });</script>
 </body>
 </html>
