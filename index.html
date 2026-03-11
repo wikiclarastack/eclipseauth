@@ -3,101 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eclipse Security | Protocol IP</title>
+    <title>ECLIPSE SECL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
-        body { background: #050505; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
-        .glass { background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.5s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        :root { --red: #ff0033; --dark: #030303; }
+        body { background: var(--dark); color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        
+        /* Efeito de Scanline (TV Antiga) */
+        body::before {
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 9999; background-size: 100% 2px, 3px 100%; pointer-events: none;
+        }
+
+        .terminal-font { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
         
         /* Intro Overlay */
-        #intro-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .terminal-modern { font-family: 'JetBrains Mono', monospace; background: #0a0a0a; border-radius: 12px; padding: 2rem; width: 90%; max-width: 600px; border: 1px solid #ff003333; }
-        .loading-line { width: 0%; height: 3px; background: #f03; box-shadow: 0 0 15px #f03; }
+        #intro-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideIn 0.4s ease-out forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: scale(0.95); filter: blur(10px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
+
+        /* Alerta de Desativação */
+        .shutdown-banner { background: repeating-linear-gradient(45deg, #ff0033, #ff0033 10px, #000 10px, #000 20px); }
+        
+        .stat-card { border-left: 2px solid var(--red); background: rgba(255, 0, 51, 0.02); }
+        
+        /* Animação de Glitch */
+        .glitch { animation: glitch 0.3s infinite; }
+        @keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-1px, 1px); } 40% { transform: translate(-1px, -1px); } 100% { transform: translate(0); } }
     </style>
 </head>
 <body>
 
+    <div class="fixed top-0 w-full z-[60] py-1 text-[9px] font-black text-center uppercase tracking-[0.5em] shutdown-banner opacity-80">
+        AVISO: ESTE TERMINAL SERÁ DESATIVADO EM BREVE. RECURSOS LIMITADOS.
+    </div>
+
     <div id="intro-overlay">
-        <div class="terminal-modern">
-            <div id="log-screen" class="h-48 overflow-hidden text-xs text-gray-400 font-mono mb-6"></div>
-            <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                <div id="progress-bar" class="loading-line"></div>
+        <div class="w-full max-w-3xl p-10">
+            <div class="mb-4 flex items-center gap-3">
+                <div class="h-1 w-12 bg-red-600"></div>
+                <span class="terminal-font text-xs font-bold text-red-600 uppercase">Eclipse Security Hub</span>
             </div>
-            <div class="flex justify-between mt-3 text-[10px] font-bold text-red-500 uppercase tracking-widest">
-                <span id="load-msg">Rastreando Endereço de Rede...</span>
-                <span id="load-pct">0%</span>
-            </div>
-            <button id="entry-btn" class="hidden w-full mt-8 py-4 bg-white text-black font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all rounded-lg">
-                Liberar Acesso
-            </button>
-        </div>
-    </div>
-
-    <div id="auth-modal" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/90 hidden">
-        <div class="glass p-10 rounded-3xl w-full max-w-md border-red-600/30 shadow-2xl">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl font-black italic uppercase">Eclipse <span class="text-red-600">Gate</span></h2>
-                <p class="text-[10px] text-gray-500 mt-2 uppercase tracking-widest" id="ip-display">Detectando seu IP...</p>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="auth-nick" placeholder="Digite seu Nome de Usuário" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-red-600 transition text-center font-bold">
-                <button id="btn-login-ip" class="w-full bg-red-600 py-4 rounded-xl font-black hover:bg-white hover:text-black transition-all">ENTRAR NO SISTEMA</button>
-                <p class="text-[9px] text-gray-600 text-center uppercase tracking-tighter">Nota: Seu IP será vinculado permanentemente a este Nome de Usuário.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="main-interface" class="hidden h-screen flex flex-col">
-        <nav class="fixed top-0 w-full z-50 glass px-8 py-5 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center"><i class="fas fa-shield-alt"></i></div>
-                <span class="text-xl font-extrabold tracking-tighter uppercase">Eclipse Security</span>
-            </div>
-            <div class="hidden md:flex gap-6">
-                <button onclick="setTab('home')" class="text-[11px] font-bold uppercase hover:text-red-500 transition">Início</button>
-                <button onclick="setTab('about')" class="text-[11px] font-bold uppercase hover:text-red-500 transition">Sobre Nós</button>
-                <button onclick="setTab('chat')" class="text-[11px] font-bold uppercase hover:text-red-500 transition">Chat Geral</button>
-                <button onclick="setTab('sos')" class="text-[11px] font-bold uppercase text-red-600 transition">Emergência</button>
-            </div>
-            <div class="flex items-center gap-4">
-                <span id="display-user" class="text-[10px] font-bold bg-white/5 px-3 py-1 rounded border border-white/10"></span>
-                <button onclick="location.reload()" class="text-gray-500"><i class="fas fa-power-off"></i></button>
-            </div>
-        </nav>
-
-        <section id="home" class="tab-content active pt-44 px-8 text-center max-w-4xl mx-auto">
-            <h1 class="text-6xl md:text-8xl font-black mb-6">SEGURANÇA <br><span class="text-red-600">SEM BRECHAS.</span></h1>
-            <p class="text-gray-400 text-lg">Protegendo servidores de alta performance com monitoramento de pacotes e auditoria de scripts.</p>
-            <div class="mt-10 grid md:grid-cols-2 gap-4">
-                <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc51?auto=format&fit=crop&q=80&w=600" class="rounded-2xl opacity-50 grayscale hover:grayscale-0 transition duration-700" alt="Data Center">
-                <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=600" class="rounded-2xl opacity-50 grayscale hover:grayscale-0 transition duration-700" alt="Code">
-            </div>
-        </section>
-
-        <section id="chat" class="tab-content pt-44 px-8 h-full flex flex-col">
-            <div class="flex-1 glass max-w-4xl mx-auto w-full rounded-3xl overflow-hidden flex flex-col mb-10">
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 font-mono text-sm"></div>
-                <div class="p-6 bg-black/40 border-t border-white/5 flex gap-4">
-                    <input type="text" id="chat-input" placeholder="Comando de mensagem..." class="flex-1 bg-transparent border-b border-white/10 p-2 outline-none focus:border-red-600 transition">
-                    <button id="btn-send" class="text-red-600 font-bold uppercase">Enviar</button>
+            <div id="log-screen" class="terminal-font text-[11px] text-gray-500 h-64 overflow-hidden mb-8 leading-relaxed"></div>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="p-4 border border-white/5 bg-white/5">
+                    <span class="text-[9px] text-gray-500 block">STATUS DA API</span>
+                    <span class="text-xs font-bold text-green-500">CONECTADO</span>
+                </div>
+                <div class="p-4 border border-white/5 bg-white/5">
+                    <span class="text-[9px] text-gray-500 block">FIREWALL</span>
+                    <span class="text-xs font-bold text-red-500">ÚLTIMA FASE</span>
                 </div>
             </div>
-        </section>
+            <button id="entry-btn" class="hidden w-full py-5 bg-red-600 text-white font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all">INICIALIZAR SEQUÊNCIA_</button>
+        </div>
+    </div>
 
-        <section id="sos" class="tab-content pt-44 px-8 max-w-xl mx-auto w-full">
-            <div class="glass p-10 rounded-3xl border-red-600/30">
-                <h2 class="text-2xl font-black mb-6">CENTRO DE RESPOSTA</h2>
-                <input type="text" id="sos-link" placeholder="Link do Jogo" class="w-full bg-white/5 p-4 rounded-xl mb-4 border border-white/5 outline-none">
-                <textarea id="sos-desc" placeholder="Relatório do ataque..." class="w-full bg-white/5 p-4 rounded-xl h-32 mb-4 border border-white/5 outline-none"></textarea>
-                <button id="btn-sos" class="w-full bg-red-600 py-4 rounded-xl font-bold hover:bg-white hover:text-black transition">DISPARAR CHAMADO</button>
+    <div id="auth-modal" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/95 hidden">
+        <div class="glass p-12 rounded-lg w-full max-w-md border-t-4 border-red-600">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black uppercase tracking-tighter">ACCESS <span class="text-red-600">HUB</span></h2>
+                <p class="text-[9px] text-gray-500 mt-2 uppercase font-bold tracking-widest" id="ip-display">IDENTIFICANDO IP...</p>
             </div>
-        </section>
+            <div class="space-y-4">
+                <input type="text" id="auth-nick" placeholder="USUÁRIO" class="w-full bg-black border border-white/10 p-5 rounded outline-none focus:border-red-600 transition text-center font-bold tracking-widest">
+                <button id="btn-login-ip" class="w-full bg-white text-black py-5 font-black hover:bg-red-600 hover:text-white transition-all uppercase tracking-widest">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-interface" class="hidden h-screen flex flex-col pt-10">
+        <nav class="fixed left-0 top-0 bottom-0 w-20 glass flex flex-col items-center py-20 gap-10 z-50 border-r border-white/5">
+            <button onclick="setTab('home')" class="text-gray-500 hover:text-red-600 transition"><i class="fas fa-home"></i></button>
+            <button onclick="setTab('about')" class="text-gray-500 hover:text-red-600 transition"><i class="fas fa-info-circle"></i></button>
+            <button onclick="setTab('chat')" class="text-gray-500 hover:text-red-600 transition"><i class="fas fa-comments"></i></button>
+            <button onclick="setTab('sos')" class="text-red-600 hover:scale-125 transition"><i class="fas fa-biohazard"></i></button>
+            <button onclick="location.reload()" class="mt-auto text-gray-500 hover:text-red-600"><i class="fas fa-power-off"></i></button>
+        </nav>
+
+        <main class="ml-20 flex-1 overflow-y-auto pb-20">
+            <section id="home" class="tab-content active p-10 md:p-20">
+                <div class="max-w-4xl">
+                    <span class="text-red-600 font-bold text-xs uppercase tracking-[0.5em] mb-4 block">Fase Final de Operação</span>
+                    <h1 class="text-7xl md:text-9xl font-black mb-8 leading-none tracking-tighter">ECLIPSE <br>SECURITY.</h1>
+                    
+                    <div class="grid md:grid-cols-3 gap-6 mb-12">
+                        <div class="stat-card p-6">
+                            <span class="text-[9px] text-gray-500 block uppercase">Vulnerabilidades Identificadas</span>
+                            <span class="text-2xl font-bold">14.821</span>
+                        </div>
+                        <div class="stat-card p-6">
+                            <span class="text-[9px] text-gray-500 block uppercase">Sinais de Socorro Ativos</span>
+                            <span class="text-2xl font-bold">42</span>
+                        </div>
+                        <div class="stat-card p-6">
+                            <span class="text-[9px] text-gray-500 block uppercase">Tempo Restante Hub</span>
+                            <span class="text-2xl font-bold text-red-600">CURTO</span>
+                        </div>
+                    </div>
+
+                    <p class="text-gray-400 text-xl max-w-2xl leading-relaxed">
+                        Este site é um canal temporário de auxílio para desenvolvedores Roblox. Nossas operações estão sendo redirecionadas. Aproveite os últimos dias de acesso ao nosso banco de dados de inteligência.
+                    </p>
+                </div>
+            </section>
+
+            <section id="about" class="tab-content p-10 md:p-20">
+                <h2 class="text-5xl font-black mb-10 uppercase">O que <span class="text-red-600">Sabemos.</span></h2>
+                <div class="grid md:grid-cols-2 gap-10">
+                    <div class="glass p-8 rounded-lg relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1510511459019-5dee997ddfdf?auto=format&fit=crop&q=80&w=800" class="absolute inset-0 w-full h-full object-cover opacity-10" alt="Code">
+                        <h3 class="text-red-600 font-bold mb-4">MÉTODOS DE ATAQUE</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed">
+                            Sabemos como os exploradores agem. Desde injeções de Remote Events via Synapse/ScriptWare até a utilização de backdoors ocultos em plugins de construção. A Eclipse mapeou todos os vetores de crash de servidor e RDM em massa.
+                        </p>
+                    </div>
+                    <div class="glass p-8 rounded-lg">
+                        <h3 class="text-red-600 font-bold mb-4">SISTEMAS ANTIGOS</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed">
+                            Muitas ferramentas atuais estão obsoletas. Nossa equipe, liderada por <span class="text-white">Silva777only</span>, desenvolveu métodos de filtragem que a própria engine do Roblox ainda não implementou nativamente.
+                        </p>
+                    </div>
+                    <div class="md:col-span-2 p-8 border border-red-600/20 bg-red-600/5">
+                        <h4 class="font-bold mb-2">⚠ COMUNICADO IMPORTANTE</h4>
+                        <p class="text-xs text-gray-500">Este portal foi criado exclusivamente para auxiliar a comunidade durante o surto de exploração v5. Devido à nossa migração para sistemas privados de segurança de alto nível, este site será **desativado em breve**. Utilize o SOS enquanto os servidores estão online.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chat" class="tab-content p-10 h-full flex flex-col">
+                <div class="flex-1 glass rounded-lg flex flex-col max-w-5xl mx-auto w-full">
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-10 space-y-4 terminal-font text-xs"></div>
+                    <div class="p-6 bg-black flex gap-4 border-t border-white/5">
+                        <input type="text" id="chat-input" placeholder="ENTRE COM A MENSAGEM..." class="flex-1 bg-transparent border-b border-red-600 p-2 outline-none uppercase font-bold text-xs tracking-widest">
+                        <button id="btn-send" class="text-red-600 font-black px-6">ENVIAR_</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sos" class="tab-content p-10 md:p-20 max-w-2xl mx-auto">
+                <div class="glass p-10 border-l-8 border-red-600">
+                    <h2 class="text-4xl font-black mb-4">REQUISITAR SOS</h2>
+                    <p class="text-xs text-gray-500 mb-8 uppercase font-bold tracking-widest">Último meio de contato ativo com Silva777only.</p>
+                    <div class="space-y-4">
+                        <input type="text" id="sos-link" placeholder="GAME URL" class="w-full bg-white/5 p-5 rounded outline-none border border-white/5 focus:border-red-600 transition">
+                        <textarea id="sos-desc" placeholder="DESCRIÇÃO DO INCIDENTE" class="w-full bg-white/5 p-5 rounded outline-none border border-white/5 focus:border-red-600 h-40"></textarea>
+                        <button id="btn-sos" class="w-full bg-red-600 py-5 font-black uppercase hover:bg-white hover:text-black transition-all">Enviar Sinal de Socorro</button>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <script type="module">
@@ -116,132 +179,108 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let userIP = "";
-        let userData = null;
+        let userIP = "UNIDENTIFIED";
+        let userNick = null;
 
-        // --- PEGAR IP DO USUÁRIO ---
-        async function fetchIP() {
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                userIP = data.ip;
-                document.getElementById('ip-display').innerText = `SEU ENDEREÇO IP: ${userIP}`;
-            } catch (e) {
-                document.getElementById('ip-display').innerText = "ERRO AO IDENTIFICAR IP";
-            }
-        }
-        fetchIP();
-
-        // --- INTRODUÇÃO ---
+        // Intro Logs
         const logs = [
-            "Conectando ao núcleo Eclipse Security...",
-            "Injetando módulos de proteção de dados...",
-            "Verificando integridade do endereço IP...",
-            "Silva777only monitorando acesso...",
-            "Sistema pronto para autenticação de usuário."
+            "> ACESSANDO FIREBASE_BACKEND...",
+            "> IP_TRACE: INICIANDO LOCALIZAÇÃO...",
+            "> ADVERTÊNCIA: SISTEMA EM FASE DE DESATIVAÇÃO.",
+            "> CARREGANDO PROTOCOLOS DE AJUDA TEMPORÁRIA...",
+            "> DATABASE: SILVA777ONLY ONLINE.",
+            "> TERMINAL PRONTO PARA USO LIMITADO."
         ];
         let lIdx = 0;
-        const startIntro = () => {
+        function showLogs() {
             if(lIdx < logs.length) {
                 const p = document.createElement('p');
-                p.className = "mb-1";
-                p.innerHTML = `<span class='text-red-600'>[LOG]</span> ${logs[lIdx]}`;
+                p.className = "mb-2";
+                p.innerText = logs[lIdx];
                 document.getElementById('log-screen').appendChild(p);
                 lIdx++;
-                const prc = Math.floor((lIdx / logs.length) * 100);
-                document.getElementById('progress-bar').style.width = prc + "%";
-                document.getElementById('load-pct').innerText = prc + "%";
-                setTimeout(startIntro, 800);
+                setTimeout(showLogs, 500);
             } else {
                 document.getElementById('entry-btn').classList.remove('hidden');
             }
-        };
-        startIntro();
+        }
+        showLogs();
+
+        // IP Detect
+        fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => {
+            userIP = d.ip;
+            document.getElementById('ip-display').innerText = "VINCULADO AO IP: " + userIP;
+        });
 
         document.getElementById('entry-btn').onclick = () => {
             document.getElementById('intro-overlay').style.display = 'none';
             document.getElementById('auth-modal').classList.remove('hidden');
         };
 
-        // --- SISTEMA DE LOGIN POR USER & IP ---
+        // Auth Logic
         document.getElementById('btn-login-ip').onclick = async () => {
             const nick = document.getElementById('auth-nick').value.trim();
-            if(!nick || !userIP) return alert("Aguarde a detecção do IP e preencha o Nick.");
+            if(!nick) return alert("INSIRA UM NICKNAME.");
 
             const userRef = doc(db, "usuarios", nick);
             const userSnap = await getDoc(userRef);
 
-            if (userSnap.exists()) {
-                const data = userSnap.data();
-                if (data.ip === userIP) {
-                    login(nick);
-                } else {
-                    alert("ACESSO NEGADO: Este Nick pertence a outro endereço IP.");
-                }
+            if(userSnap.exists()) {
+                if(userSnap.data().ip === userIP) login(nick);
+                else alert("IP NÃO CORRESPONDE AO NICKNAME REGISTRADO.");
             } else {
-                // Registrar Novo Usuário vinculado ao IP
-                await setDoc(userRef, {
-                    username: nick,
-                    ip: userIP,
-                    createdAt: serverTimestamp()
-                });
+                await setDoc(userRef, { username: nick, ip: userIP, date: serverTimestamp() });
                 login(nick);
             }
         };
 
         function login(nick) {
-            userData = { username: nick, ip: userIP };
+            userNick = nick;
             document.getElementById('auth-modal').classList.add('hidden');
             document.getElementById('main-interface').classList.remove('hidden');
-            document.getElementById('display-user').innerText = nick;
-            document.body.style.overflow = "auto";
-            loadChat();
+            startChat();
         }
 
-        // --- CHAT & SOS ---
-        function loadChat() {
+        // Chat
+        function startChat() {
             const q = query(collection(db, "chat_geral"), orderBy("createdAt", "asc"));
             onSnapshot(q, (s) => {
                 const box = document.getElementById('chat-messages');
                 box.innerHTML = "";
                 s.forEach(d => {
                     const m = d.data();
-                    const isSilva = m.username === "silva777only";
-                    box.innerHTML += `<div class="p-2 border-b border-white/5"><span class="${isSilva ? 'text-red-600 font-bold' : 'text-gray-500'}">[${m.username}]</span>: ${m.text}</div>`;
+                    const isS = m.username === "silva777only";
+                    box.innerHTML += `<div class="mb-2"><span class="${isS ? 'text-red-600 font-bold glitch' : 'text-gray-500'}">[${m.username}]</span>: ${m.text}</div>`;
                 });
                 box.scrollTop = box.scrollHeight;
             });
         }
 
         document.getElementById('btn-send').onclick = async () => {
-            const input = document.getElementById('chat-input');
-            if(!input.value.trim()) return;
+            const inp = document.getElementById('chat-input');
+            if(!inp.value) return;
             await addDoc(collection(db, "chat_geral"), {
-                text: input.value,
-                username: userData.username,
-                createdAt: serverTimestamp()
+                text: inp.value, username: userNick, createdAt: serverTimestamp()
             });
-            input.value = "";
+            inp.value = "";
         };
 
         document.getElementById('btn-sos').onclick = async () => {
             await addDoc(collection(db, "ajuda_emergencial"), {
                 link: document.getElementById('sos-link').value,
                 desc: document.getElementById('sos-desc').value,
-                user: userData.username,
-                ip: userData.ip,
-                createdAt: serverTimestamp()
+                user: userNick, ip: userIP, createdAt: serverTimestamp()
             });
-            alert("Chamado transmitido. Silva777only analisará o incidente.");
+            alert("SINAL TRANSMITIDO. O HUB REGISTROU SEU PEDIDO.");
         };
 
         window.setTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-        };
+        }
 
     </script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>AOS.init({ duration: 1000, once: true });</script>
+    <script>AOS.init();</script>
 </body>
 </html>
